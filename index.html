@@ -3,34 +3,38 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>로또 번호 추첨기</title>
+  <title>CartPilot | AI Shopping Assistant</title>
   <style>
     :root {
       color-scheme: light;
-      --bg-1: #f7f1e3;
-      --bg-2: #f3d9b1;
-      --ink: #1f1a17;
-      --accent: #c8553d;
-      --accent-dark: #8f3727;
-      --card: rgba(255, 250, 240, 0.88);
-      --line: rgba(31, 26, 23, 0.08);
-      --muted: rgba(31, 26, 23, 0.7);
-      --surface: rgba(31, 26, 23, 0.08);
-      --shadow: rgba(31, 26, 23, 0.12);
+      --bg: #f3efe7;
+      --bg-accent: #d8e8d4;
+      --panel: rgba(255, 252, 246, 0.9);
+      --panel-strong: #fffdf8;
+      --ink: #1d2a23;
+      --muted: #5c6b63;
+      --line: rgba(29, 42, 35, 0.12);
+      --brand: #1f7a5c;
+      --brand-strong: #135540;
+      --brand-soft: rgba(31, 122, 92, 0.12);
+      --warning: #c67d31;
+      --shadow: 0 24px 80px rgba(33, 44, 38, 0.12);
     }
 
     :root[data-theme="dark"] {
       color-scheme: dark;
-      --bg-1: #121722;
-      --bg-2: #26344a;
-      --ink: #f3efe7;
-      --accent: #ff8a5b;
-      --accent-dark: #e06a3b;
-      --card: rgba(16, 21, 30, 0.84);
+      --bg: #101715;
+      --bg-accent: #1b2c29;
+      --panel: rgba(18, 25, 23, 0.88);
+      --panel-strong: #16211f;
+      --ink: #edf3ef;
+      --muted: #a6b6ae;
       --line: rgba(255, 255, 255, 0.1);
-      --muted: rgba(243, 239, 231, 0.72);
-      --surface: rgba(255, 255, 255, 0.08);
-      --shadow: rgba(0, 0, 0, 0.34);
+      --brand: #5ed3a6;
+      --brand-strong: #2db684;
+      --brand-soft: rgba(94, 211, 166, 0.12);
+      --warning: #f1b15f;
+      --shadow: 0 26px 90px rgba(0, 0, 0, 0.34);
     }
 
     * {
@@ -40,252 +44,690 @@
     body {
       margin: 0;
       min-height: 100vh;
-      display: grid;
-      place-items: center;
-      padding: 24px;
-      font-family: "Segoe UI", "Malgun Gothic", sans-serif;
+      font-family: "Pretendard", "Noto Sans KR", "Segoe UI", sans-serif;
       color: var(--ink);
       background:
-        radial-gradient(circle at top left, rgba(255, 255, 255, 0.45), transparent 35%),
-        linear-gradient(135deg, var(--bg-1), var(--bg-2));
+        radial-gradient(circle at top left, rgba(255, 255, 255, 0.56), transparent 28%),
+        radial-gradient(circle at 85% 15%, rgba(31, 122, 92, 0.16), transparent 20%),
+        linear-gradient(140deg, var(--bg), var(--bg-accent));
       transition: background 0.25s ease, color 0.25s ease;
     }
 
-    .app {
-      width: min(720px, 100%);
-      background: var(--card);
-      border: 1px solid var(--line);
-      border-radius: 28px;
-      padding: 32px;
-      box-shadow: 0 24px 60px var(--shadow);
-      backdrop-filter: blur(10px);
-      transition: background 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+    .shell {
+      width: min(1200px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 32px 0 56px;
     }
 
-    .topbar {
-      display: flex;
-      justify-content: flex-end;
+    .hero {
+      display: grid;
+      grid-template-columns: minmax(0, 1.35fr) minmax(280px, 0.9fr);
+      gap: 24px;
+      align-items: stretch;
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 28px;
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(18px);
+    }
+
+    .hero-copy {
+      padding: 34px;
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
       margin-bottom: 18px;
+      padding: 8px 14px;
+      border-radius: 999px;
+      background: var(--brand-soft);
+      color: var(--brand);
+      font-size: 0.9rem;
+      font-weight: 700;
+      letter-spacing: 0.02em;
     }
 
     h1 {
-      margin: 0 0 10px;
-      font-size: clamp(2rem, 5vw, 3.5rem);
-      line-height: 1;
-    }
-
-    p {
       margin: 0;
-      color: var(--muted);
+      font-size: clamp(2.3rem, 5vw, 4.8rem);
+      line-height: 0.96;
+      letter-spacing: -0.04em;
     }
 
-    .controls {
+    .hero-copy p {
+      max-width: 56ch;
+      margin: 18px 0 0;
+      color: var(--muted);
+      font-size: 1.04rem;
+      line-height: 1.6;
+    }
+
+    .hero-card {
       display: flex;
-      gap: 12px;
-      margin: 28px 0 24px;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 26px;
+      overflow: hidden;
+      position: relative;
+      isolation: isolate;
+    }
+
+    .hero-card::after {
+      content: "";
+      position: absolute;
+      inset: auto -40px -60px auto;
+      width: 180px;
+      height: 180px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(31, 122, 92, 0.28), transparent 68%);
+      z-index: -1;
+    }
+
+    .metric {
+      padding: 14px 0;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .metric:last-child {
+      border-bottom: 0;
+      padding-bottom: 0;
+    }
+
+    .metric-label {
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+
+    .metric strong {
+      display: block;
+      margin-top: 6px;
+      font-size: 1.35rem;
+    }
+
+    .toolbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      margin: 24px 0 18px;
+    }
+
+    .chips {
+      display: flex;
+      gap: 10px;
       flex-wrap: wrap;
     }
 
-    button {
-      border: 0;
+    .chip {
+      border: 1px solid var(--line);
       border-radius: 999px;
-      padding: 14px 22px;
-      font-size: 1rem;
-      font-weight: 700;
+      background: var(--panel);
+      color: var(--ink);
+      padding: 10px 14px;
+      font: inherit;
       cursor: pointer;
-      transition: transform 0.15s ease, opacity 0.15s ease, background 0.15s ease;
+      transition: transform 0.15s ease, background 0.2s ease, border-color 0.2s ease;
     }
 
-    button:hover {
+    .chip:hover,
+    .chip.active {
       transform: translateY(-1px);
+      background: var(--brand-soft);
+      border-color: rgba(31, 122, 92, 0.28);
+    }
+
+    .theme-button {
+      border: 0;
+      border-radius: 999px;
+      background: var(--panel);
+      color: var(--ink);
+      padding: 12px 18px;
+      font: inherit;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+    }
+
+    .search-panel {
+      padding: 24px;
+      display: grid;
+      gap: 16px;
+    }
+
+    .search-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1.4fr) 180px 180px;
+      gap: 14px;
+    }
+
+    .field {
+      display: grid;
+      gap: 8px;
+    }
+
+    .field label {
+      font-size: 0.92rem;
+      color: var(--muted);
+      font-weight: 700;
+    }
+
+    .field input,
+    .field select {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: var(--panel-strong);
+      color: var(--ink);
+      padding: 15px 16px;
+      font: inherit;
+      outline: none;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .field input:focus,
+    .field select:focus {
+      border-color: rgba(31, 122, 92, 0.45);
+      box-shadow: 0 0 0 4px rgba(31, 122, 92, 0.12);
+    }
+
+    .search-actions {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .primary,
+    .secondary {
+      border: 0;
+      border-radius: 16px;
+      padding: 14px 18px;
+      font: inherit;
+      font-weight: 800;
+      cursor: pointer;
+      transition: transform 0.15s ease, opacity 0.2s ease, background 0.2s ease;
     }
 
     .primary {
-      background: var(--accent);
+      background: var(--brand);
       color: #fff;
     }
 
-    .primary:hover {
-      background: var(--accent-dark);
+    .primary:hover,
+    .secondary:hover,
+    .theme-button:hover {
+      transform: translateY(-1px);
     }
 
     .secondary {
-      background: var(--surface);
+      background: var(--brand-soft);
       color: var(--ink);
     }
 
-    .secondary:hover {
-      background: color-mix(in srgb, var(--surface) 78%, var(--ink));
+    .hint {
+      color: var(--muted);
+      font-size: 0.95rem;
+      line-height: 1.5;
     }
 
-    .numbers {
+    .content {
+      display: grid;
+      grid-template-columns: minmax(0, 1.15fr) minmax(300px, 0.85fr);
+      gap: 20px;
+      margin-top: 20px;
+    }
+
+    .results,
+    .summary {
+      padding: 22px;
+    }
+
+    .section-title {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+
+    .section-title h2 {
+      margin: 0;
+      font-size: 1.2rem;
+    }
+
+    .section-title span {
+      color: var(--muted);
+      font-size: 0.92rem;
+    }
+
+    .product-list {
+      display: grid;
+      gap: 14px;
+    }
+
+    .product-card {
+      display: grid;
+      gap: 16px;
+      padding: 18px;
+      border: 1px solid var(--line);
+      border-radius: 22px;
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.08), transparent), var(--panel-strong);
+    }
+
+    .product-top {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      align-items: flex-start;
+    }
+
+    .product-card h3 {
+      margin: 0;
+      font-size: 1.1rem;
+    }
+
+    .product-card p {
+      margin: 8px 0 0;
+      color: var(--muted);
+      line-height: 1.55;
+    }
+
+    .score-badge {
+      flex-shrink: 0;
+      min-width: 70px;
+      text-align: center;
+      border-radius: 18px;
+      background: var(--brand-soft);
+      color: var(--brand);
+      padding: 10px 12px;
+      font-weight: 800;
+    }
+
+    .meta {
       display: flex;
       flex-wrap: wrap;
-      gap: 12px;
+      gap: 10px;
+    }
+
+    .meta span {
+      display: inline-flex;
       align-items: center;
-      min-height: 72px;
+      gap: 6px;
+      padding: 8px 11px;
+      border-radius: 999px;
+      background: rgba(127, 127, 127, 0.08);
+      color: var(--muted);
+      font-size: 0.88rem;
     }
 
-    .ball {
-      width: 64px;
-      height: 64px;
-      border-radius: 50%;
+    .highlights {
       display: grid;
-      place-items: center;
-      font-size: 1.3rem;
-      font-weight: 800;
-      color: #fff;
-      box-shadow: inset 0 -8px 16px rgba(0, 0, 0, 0.15);
-      animation: pop 0.35s ease;
+      gap: 10px;
     }
 
-    .bonus-label {
-      width: 100%;
-      margin-top: 10px;
-      font-size: 0.95rem;
+    .highlights strong {
+      font-size: 0.92rem;
+    }
+
+    .highlights ul {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: grid;
+      gap: 8px;
+    }
+
+    .highlights li {
+      position: relative;
+      padding-left: 18px;
       color: var(--muted);
+      line-height: 1.45;
     }
 
-    .status {
-      margin-top: 22px;
-      padding-top: 18px;
-      border-top: 1px solid var(--line);
-      font-size: 0.95rem;
+    .highlights li::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 0.62em;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--brand);
+    }
+
+    .summary-grid {
+      display: grid;
+      gap: 14px;
+    }
+
+    .summary-card {
+      padding: 18px;
+      border-radius: 22px;
+      border: 1px solid var(--line);
+      background: var(--panel-strong);
+    }
+
+    .summary-card h3 {
+      margin: 0 0 10px;
+      font-size: 1rem;
+    }
+
+    .summary-card p,
+    .summary-card li {
+      margin: 0;
       color: var(--muted);
+      line-height: 1.6;
     }
 
-    @keyframes pop {
-      from {
-        opacity: 0;
-        transform: scale(0.75);
+    .summary-card ul {
+      margin: 0;
+      padding-left: 18px;
+    }
+
+    .empty {
+      padding: 28px;
+      border: 1px dashed var(--line);
+      border-radius: 22px;
+      color: var(--muted);
+      text-align: center;
+      line-height: 1.6;
+    }
+
+    .warning {
+      color: var(--warning);
+      font-weight: 700;
+    }
+
+    @media (max-width: 980px) {
+      .hero,
+      .content {
+        grid-template-columns: 1fr;
       }
 
-      to {
-        opacity: 1;
-        transform: scale(1);
+      .search-grid {
+        grid-template-columns: 1fr;
       }
     }
 
     @media (max-width: 640px) {
-      .app {
-        padding: 24px;
-        border-radius: 22px;
+      .shell {
+        width: min(100% - 20px, 1200px);
+        padding-top: 20px;
       }
 
-      .ball {
-        width: 56px;
-        height: 56px;
-        font-size: 1.1rem;
+      .hero-copy,
+      .hero-card,
+      .search-panel,
+      .results,
+      .summary {
+        padding: 18px;
       }
-    }
 
-    /* Contact Form Styles */
-    .contact-section {
-      margin-top: 32px;
-      padding-top: 24px;
-      border-top: 2px dashed var(--line);
-    }
+      .toolbar {
+        align-items: stretch;
+        flex-direction: column;
+      }
 
-    .contact-section h2 {
-      margin: 0 0 8px;
-      font-size: 1.5rem;
-    }
-
-    .contact-section p {
-      font-size: 0.9rem;
-      margin-bottom: 20px;
-    }
-
-    .contact-form {
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-    }
-
-    .form-group {
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-    }
-
-    .form-group label {
-      font-size: 0.85rem;
-      font-weight: 600;
-      color: var(--muted);
-    }
-
-    .form-group input,
-    .form-group textarea {
-      padding: 12px 16px;
-      border-radius: 12px;
-      border: 1px solid var(--line);
-      background: var(--surface);
-      color: var(--ink);
-      font-family: inherit;
-      font-size: 0.95rem;
-      transition: border-color 0.2s, box-shadow 0.2s;
-    }
-
-    .form-group input:focus,
-    .form-group textarea:focus {
-      outline: none;
-      border-color: var(--accent);
-      box-shadow: 0 0 0 3px rgba(200, 85, 61, 0.1);
-    }
-
-    .full-width {
-      width: 100%;
-      margin-top: 8px;
+      .theme-button,
+      .chip,
+      .primary,
+      .secondary {
+        width: 100%;
+      }
     }
   </style>
 </head>
 <body>
-  <main class="app">
-    <div class="topbar">
-      <button class="secondary" id="themeButton" type="button" aria-pressed="false">&#xB2E4;&#xD06C;&#xBAA8;&#xB4DC;</button>
+  <div class="shell">
+    <section class="hero">
+      <div class="panel hero-copy">
+        <div class="eyebrow">AI Shopping Assistant</div>
+        <h1>목적을 말하면<br>제품 비교까지 바로.</h1>
+        <p>
+          "자취 시작템", "침대용 아이패드 거치대", "재택근무용 조용한 키보드"처럼
+          사용 목적이나 키워드를 입력하면, 제품 후보를 점수화해서 추천 이유와 비교 포인트를 함께 보여줍니다.
+        </p>
+      </div>
+      <aside class="panel hero-card">
+        <div class="metric">
+          <div class="metric-label">추천 방식</div>
+          <strong>목적 + 예산 + 공간 조건 기반 스코어링</strong>
+        </div>
+        <div class="metric">
+          <div class="metric-label">비교 항목</div>
+          <strong>가격대, 안정성, 설치성, 활용성, 보관성</strong>
+        </div>
+        <div class="metric">
+          <div class="metric-label">추천 결과</div>
+          <strong id="heroStatus">입력 대기 중</strong>
+        </div>
+      </aside>
+    </section>
+
+    <div class="toolbar">
+      <div class="chips" id="presetChips">
+        <button class="chip active" type="button" data-query="자취 시작템">자취 시작템</button>
+        <button class="chip" type="button" data-query="침대용 아이패드 거치대">침대용 아이패드 거치대</button>
+        <button class="chip" type="button" data-query="재택근무용 무선 마우스">재택근무용 무선 마우스</button>
+        <button class="chip" type="button" data-query="좁은 방 수납 선반">좁은 방 수납 선반</button>
+      </div>
+      <button class="theme-button" id="themeButton" type="button" aria-pressed="false">다크모드</button>
     </div>
-    <h1>로또 번호 추첨기</h1>
-    <p>1부터 45까지 중복 없이 6개 번호와 보너스 번호를 뽑습니다.</p>
 
-    <section class="controls">
-      <button class="primary" id="drawButton" type="button">번호 추첨</button>
-      <button class="secondary" id="resetButton" type="button">초기화</button>
+    <section class="panel search-panel">
+      <div class="search-grid">
+        <div class="field">
+          <label for="queryInput">무엇이 필요하신가요?</label>
+          <input
+            id="queryInput"
+            type="text"
+            placeholder="예: 자취 시작템, 침대용 아이패드 거치대"
+            value="자취 시작템"
+          >
+        </div>
+        <div class="field">
+          <label for="budgetSelect">예산</label>
+          <select id="budgetSelect">
+            <option value="any">전체</option>
+            <option value="low">가성비 위주</option>
+            <option value="mid">중간 가격대</option>
+            <option value="high">프리미엄 허용</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="spaceSelect">사용 환경</label>
+          <select id="spaceSelect">
+            <option value="any">상관없음</option>
+            <option value="small">좁은 공간</option>
+            <option value="desk">책상/데스크</option>
+            <option value="bed">침대/소파</option>
+          </select>
+        </div>
+      </div>
+      <div class="search-actions">
+        <button class="primary" id="recommendButton" type="button">AI 추천 보기</button>
+        <button class="secondary" id="resetButton" type="button">조건 초기화</button>
+      </div>
+      <div class="hint" id="searchHint">
+        키워드가 구체적일수록 좋습니다. 사용 장소, 목적, 예산 조건을 함께 넣으면 추천 정확도가 올라갑니다.
+      </div>
     </section>
 
-    <section id="numbers" class="numbers" aria-live="polite"></section>
-    <div id="status" class="status">버튼을 눌러 추첨을 시작하세요.</div>
+    <section class="content">
+      <div class="panel results">
+        <div class="section-title">
+          <h2>추천 제품</h2>
+          <span id="resultCount">3개 제품 비교 중</span>
+        </div>
+        <div class="product-list" id="productList"></div>
+      </div>
 
-    <section class="contact-section">
-      <h2>제휴 문의</h2>
-      <p>궁금한 사항이 있으시면 문의를 남겨주세요.</p>
-      <form action="https://formspree.io/f/xwvrnrre" method="POST" class="contact-form">
-        <div class="form-group">
-          <label for="name">성함/업체명</label>
-          <input type="text" id="name" name="name" placeholder="홍길동" required>
+      <aside class="panel summary">
+        <div class="section-title">
+          <h2>AI 비교 요약</h2>
+          <span id="summaryLabel">현재 검색어 기준</span>
         </div>
-        <div class="form-group">
-          <label for="email">이메일 주소</label>
-          <input type="email" id="email" name="email" placeholder="example@email.com" required>
+        <div class="summary-grid">
+          <div class="summary-card">
+            <h3>한 줄 추천</h3>
+            <p id="topPickText"></p>
+          </div>
+          <div class="summary-card">
+            <h3>왜 이 순서인가</h3>
+            <ul id="comparisonPoints"></ul>
+          </div>
+          <div class="summary-card">
+            <h3>구매 전 체크</h3>
+            <p id="warningText" class="warning"></p>
+          </div>
         </div>
-        <div class="form-group">
-          <label for="message">문의 내용</label>
-          <textarea id="message" name="message" rows="4" placeholder="문의하실 내용을 입력해주세요." required></textarea>
-        </div>
-        <button type="submit" class="primary full-width">문의 보내기</button>
-      </form>
+      </aside>
     </section>
-  </main>
+  </div>
 
   <script>
-    const numbersEl = document.getElementById("numbers");
-    const statusEl = document.getElementById("status");
-    const drawButton = document.getElementById("drawButton");
+    const productCatalog = [
+      {
+        id: "starter-box",
+        name: "룸이지 스타터 박스",
+        category: "생활 패키지",
+        price: "39,900원",
+        priceBand: "low",
+        useCases: ["자취", "자취 시작", "자취 시작템", "원룸", "기본 생활", "입문"],
+        spaces: ["small", "any"],
+        strengths: ["필수 생활용품을 한 번에 준비", "수납 바구니 포함", "가성비 구성이 좋음"],
+        cautions: "이미 가지고 있는 생활용품이 많다면 중복 구매가 생길 수 있습니다.",
+        blurb: "세제, 수세미, 휴지걸이, 빨래망처럼 첫 자취에 자주 빠지는 품목을 묶은 패키지입니다.",
+        tags: ["가성비", "입문용", "생활필수"],
+        scores: { utility: 9, setup: 8, space: 7, stability: 7 }
+      },
+      {
+        id: "fold-cart",
+        name: "슬림 폴딩 트롤리",
+        category: "수납 가구",
+        price: "52,000원",
+        priceBand: "mid",
+        useCases: ["자취", "수납", "좁은 방", "원룸", "정리", "생활"],
+        spaces: ["small", "any"],
+        strengths: ["좁은 틈새 활용", "조립이 간단함", "주방과 욕실 모두 사용 가능"],
+        cautions: "무거운 전자레인지를 올리는 용도에는 적합하지 않습니다.",
+        blurb: "폭이 좁은 3단 트롤리라 원룸 주방, 세탁기 옆, 책상 옆 빈틈에 두기 좋습니다.",
+        tags: ["공간절약", "이동식", "정리정돈"],
+        scores: { utility: 8, setup: 9, space: 10, stability: 6 }
+      },
+      {
+        id: "bedding-stand",
+        name: "베드플렉스 태블릿 암",
+        category: "태블릿 거치대",
+        price: "31,500원",
+        priceBand: "low",
+        useCases: ["침대용 아이패드 거치대", "아이패드 거치대", "침대", "소파", "태블릿", "넷플릭스"],
+        spaces: ["bed", "any"],
+        strengths: ["클램프 고정력 우수", "각도 조절 범위가 넓음", "누워서 사용하기 편함"],
+        cautions: "헤드보드 두께가 두꺼우면 클램프 호환 여부를 확인해야 합니다.",
+        blurb: "침대 프레임이나 협탁에 고정해서 태블릿을 눈높이로 맞출 수 있는 롱암 타입입니다.",
+        tags: ["침대용", "영상시청", "각도조절"],
+        scores: { utility: 9, setup: 7, space: 8, stability: 9 }
+      },
+      {
+        id: "pillow-stand",
+        name: "필로우 쿠션 태블릿 스탠드",
+        category: "태블릿 거치대",
+        price: "24,900원",
+        priceBand: "low",
+        useCases: ["침대용 아이패드 거치대", "아이패드 거치대", "침대", "쿠션", "태블릿", "독서"],
+        spaces: ["bed", "small", "any"],
+        strengths: ["설치가 필요 없음", "가볍게 옮기기 쉬움", "무릎 위에서도 사용 가능"],
+        cautions: "암 타입보다 세밀한 높이 조절은 제한적입니다.",
+        blurb: "쿠션 베이스 위에 태블릿을 세우는 방식이라 침대 위에서 부담 없이 쓰기 쉽습니다.",
+        tags: ["무설치", "가벼움", "휴대성"],
+        scores: { utility: 7, setup: 10, space: 9, stability: 6 }
+      },
+      {
+        id: "silent-mouse",
+        name: "클릭제로 무선 마우스",
+        category: "입력기기",
+        price: "28,000원",
+        priceBand: "low",
+        useCases: ["재택근무", "무선 마우스", "조용한 마우스", "사무용", "집중"],
+        spaces: ["desk", "any"],
+        strengths: ["저소음 클릭", "배터리 효율 우수", "손목 부담이 적은 곡선형"],
+        cautions: "게임용 고성능 센서를 기대하면 아쉬울 수 있습니다.",
+        blurb: "회의 중이나 늦은 밤 사용에 적합한 저소음 마우스입니다.",
+        tags: ["저소음", "사무용", "무선"],
+        scores: { utility: 8, setup: 9, space: 8, stability: 8 }
+      },
+      {
+        id: "shelf-tower",
+        name: "모듈 스틸 5단 선반",
+        category: "수납 가구",
+        price: "84,000원",
+        priceBand: "mid",
+        useCases: ["좁은 방 수납 선반", "수납 선반", "선반", "원룸", "정리", "좁은 방"],
+        spaces: ["small", "any"],
+        strengths: ["세로 수납 효율이 높음", "하중 지지력이 우수", "주방과 드레스룸 겸용 가능"],
+        cautions: "높이가 있어 천장형 조명 간섭 여부를 확인해야 합니다.",
+        blurb: "바닥 면적을 적게 차지하면서도 적재력이 높은 세로형 선반입니다.",
+        tags: ["높은 적재력", "원룸추천", "세로수납"],
+        scores: { utility: 9, setup: 6, space: 9, stability: 9 }
+      },
+      {
+        id: "mini-vacuum",
+        name: "원스텝 핸디 청소기",
+        category: "소형 가전",
+        price: "67,000원",
+        priceBand: "mid",
+        useCases: ["자취", "청소기", "원룸", "청소", "생활 가전"],
+        spaces: ["small", "any"],
+        strengths: ["보관이 쉬운 소형 사이즈", "먼지통 비우기 간편", "차량 청소도 가능"],
+        cautions: "대형 러그 위주 환경이라면 메인 청소기로는 부족할 수 있습니다.",
+        blurb: "원룸 바닥, 책상, 침구 틈새를 빠르게 관리할 수 있는 소형 무선 청소기입니다.",
+        tags: ["원룸가전", "무선", "간편청소"],
+        scores: { utility: 8, setup: 8, space: 9, stability: 7 }
+      },
+      {
+        id: "desk-lamp",
+        name: "포커스 라인 데스크 램프",
+        category: "조명",
+        price: "44,000원",
+        priceBand: "mid",
+        useCases: ["책상", "데스크", "독서등", "재택근무", "조명"],
+        spaces: ["desk", "any"],
+        strengths: ["밝기와 색온도 조절 가능", "긴 헤드로 책상 전체를 비춤", "USB 충전 포트 포함"],
+        cautions: "클램프형이 아니라 책상 폭이 매우 좁으면 다소 부담될 수 있습니다.",
+        blurb: "눈 피로를 줄이기 위한 작업용 조명으로 데스크 환경 개선에 적합합니다.",
+        tags: ["집중력", "눈부심방지", "데스크셋업"],
+        scores: { utility: 7, setup: 9, space: 6, stability: 8 }
+      }
+    ];
+
+    const queryInput = document.getElementById("queryInput");
+    const budgetSelect = document.getElementById("budgetSelect");
+    const spaceSelect = document.getElementById("spaceSelect");
+    const recommendButton = document.getElementById("recommendButton");
     const resetButton = document.getElementById("resetButton");
+    const productList = document.getElementById("productList");
+    const resultCount = document.getElementById("resultCount");
+    const topPickText = document.getElementById("topPickText");
+    const comparisonPoints = document.getElementById("comparisonPoints");
+    const warningText = document.getElementById("warningText");
+    const summaryLabel = document.getElementById("summaryLabel");
     const themeButton = document.getElementById("themeButton");
-    const storageKey = "theme-preference";
+    const presetChips = Array.from(document.querySelectorAll(".chip"));
+    const heroStatus = document.getElementById("heroStatus");
+    const searchHint = document.getElementById("searchHint");
+    const themeStorageKey = "cartpilot-theme";
+
+    function normalizeText(text) {
+      return text.trim().toLowerCase();
+    }
 
     function getPreferredTheme() {
-      const saved = localStorage.getItem(storageKey);
+      const saved = localStorage.getItem(themeStorageKey);
       if (saved === "light" || saved === "dark") {
         return saved;
       }
@@ -295,7 +737,7 @@
 
     function updateThemeButton(theme) {
       const isDark = theme === "dark";
-      themeButton.textContent = isDark ? "\uB77C\uC774\uD2B8\uBAA8\uB4DC" : "\uB2E4\uD06C\uBAA8\uB4DC";
+      themeButton.textContent = isDark ? "라이트모드" : "다크모드";
       themeButton.setAttribute("aria-pressed", String(isDark));
     }
 
@@ -306,72 +748,211 @@
 
     function toggleTheme() {
       const nextTheme = document.documentElement.dataset.theme === "dark" ? "light" : "dark";
-      localStorage.setItem(storageKey, nextTheme);
+      localStorage.setItem(themeStorageKey, nextTheme);
       applyTheme(nextTheme);
     }
 
-    function createNumberPool() {
-      return Array.from({ length: 45 }, (_, index) => index + 1);
-    }
-
-    function pickNumbers() {
-      const pool = createNumberPool();
-
-      for (let i = pool.length - 1; i > 0; i -= 1) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [pool[i], pool[j]] = [pool[j], pool[i]];
+    function matchUseCase(product, query) {
+      if (!query) {
+        return 0;
       }
 
-      const selected = pool.slice(0, 7).sort((a, b) => a - b);
-      const main = selected.slice(0, 6);
-      const bonus = selected[6];
+      let score = 0;
+      const keywords = query.split(/\s+/).filter(Boolean);
 
-      return { main, bonus };
-    }
+      product.useCases.forEach((item) => {
+        const normalizedItem = normalizeText(item);
+        if (normalizedItem.includes(query)) {
+          score += 28;
+        }
 
-    function getBallColor(number) {
-      if (number <= 10) return "#f4b400";
-      if (number <= 20) return "#4285f4";
-      if (number <= 30) return "#db4437";
-      if (number <= 40) return "#0f9d58";
-      return "#5f6368";
-    }
-
-    function renderBall(number) {
-      const ball = document.createElement("div");
-      ball.className = "ball";
-      ball.textContent = number;
-      ball.style.background = getBallColor(number);
-      return ball;
-    }
-
-    function renderNumbers() {
-      const { main, bonus } = pickNumbers();
-      numbersEl.innerHTML = "";
-
-      main.forEach((number) => {
-        numbersEl.appendChild(renderBall(number));
+        keywords.forEach((keyword) => {
+          if (normalizedItem.includes(keyword)) {
+            score += 9;
+          }
+        });
       });
 
-      const label = document.createElement("div");
-      label.className = "bonus-label";
-      label.textContent = "보너스 번호";
-      numbersEl.appendChild(label);
-      numbersEl.appendChild(renderBall(bonus));
+      if (normalizeText(product.name).includes(query)) {
+        score += 16;
+      }
 
-      const now = new Date();
-      statusEl.textContent = `${now.toLocaleString("ko-KR")} 기준으로 새 번호를 추첨했습니다.`;
+      return score;
     }
 
-    function resetNumbers() {
-      numbersEl.innerHTML = "";
-      statusEl.textContent = "버튼을 눌러 추첨을 시작하세요.";
+    function scoreProduct(product, query, budget, space) {
+      let score = product.scores.utility * 4 + product.scores.stability * 3 + product.scores.setup * 2;
+      score += matchUseCase(product, query);
+
+      if (budget === "low" && product.priceBand === "low") score += 18;
+      if (budget === "mid" && (product.priceBand === "mid" || product.priceBand === "low")) score += 12;
+      if (budget === "high" && product.priceBand !== "low") score += 10;
+      if (budget !== "any" && budget !== product.priceBand && !(budget === "mid" && product.priceBand === "low")) score -= 8;
+
+      if (space !== "any" && product.spaces.includes(space)) score += 18;
+      if (space === "small") score += product.scores.space * 2;
+      if (space !== "any" && !product.spaces.includes(space)) score -= 6;
+
+      return score;
     }
+
+    function buildRecommendationReason(product, query, budget, space) {
+      const reasons = [];
+
+      if (query && product.useCases.some((item) => normalizeText(item).includes(query))) {
+        reasons.push("검색 목적과 직접 맞물리는 카테고리");
+      }
+
+      if (budget === product.priceBand || (budget === "mid" && product.priceBand === "low")) {
+        reasons.push("예산 조건에 맞는 가격대");
+      }
+
+      if (space !== "any" && product.spaces.includes(space)) {
+        reasons.push("사용 공간과 맞는 구조");
+      }
+
+      if (product.scores.stability >= 8) {
+        reasons.push("안정성이 높은 편");
+      }
+
+      if (product.scores.setup >= 9) {
+        reasons.push("설치와 사용이 간단함");
+      }
+
+      return reasons.slice(0, 3);
+    }
+
+    function renderProducts(products, query, budget, space) {
+      if (!products.length) {
+        productList.innerHTML = '<div class="empty">조건에 맞는 추천이 없습니다.<br>검색어를 조금 더 넓게 입력하거나 예산 조건을 완화해보세요.</div>';
+        resultCount.textContent = "0개 제품";
+        topPickText.textContent = "지금 조건에서는 딱 맞는 제품을 찾지 못했습니다.";
+        comparisonPoints.innerHTML = "<li>검색어를 짧게 바꾸거나 예산을 전체로 두고 다시 시도해보세요.</li>";
+        warningText.textContent = "검색 범위를 너무 좁게 잡으면 추천 후보가 급격히 줄어듭니다.";
+        heroStatus.textContent = "추천 없음";
+        return;
+      }
+
+      const cards = products.map((product, index) => {
+        const reasons = buildRecommendationReason(product, query, budget, space);
+
+        return `
+          <article class="product-card">
+            <div class="product-top">
+              <div>
+                <h3>${index + 1}. ${product.name}</h3>
+                <p>${product.blurb}</p>
+              </div>
+              <div class="score-badge">${product.matchScore}점</div>
+            </div>
+            <div class="meta">
+              <span>${product.category}</span>
+              <span>${product.price}</span>
+              <span>${product.tags[0]}</span>
+            </div>
+            <div class="highlights">
+              <strong>추천 이유</strong>
+              <ul>
+                ${reasons.map((reason) => `<li>${reason}</li>`).join("")}
+              </ul>
+            </div>
+          </article>
+        `;
+      });
+
+      productList.innerHTML = cards.join("");
+      resultCount.textContent = `${products.length}개 제품 비교 중`;
+      heroStatus.textContent = `${products[0].name} 추천`;
+    }
+
+    function renderSummary(products, query, budget, space) {
+      if (!products.length) {
+        summaryLabel.textContent = "조건을 다시 조정해보세요";
+        return;
+      }
+
+      const topPick = products[0];
+      const secondPick = products[1];
+      const budgetLabelMap = {
+        any: "전체 가격대",
+        low: "가성비 위주",
+        mid: "중간 가격대",
+        high: "프리미엄 허용"
+      };
+      const spaceLabelMap = {
+        any: "공간 제한 없음",
+        small: "좁은 공간",
+        desk: "책상 중심",
+        bed: "침대/소파 중심"
+      };
+
+      summaryLabel.textContent = `"${queryInput.value.trim() || "전체"}" 기준`;
+      topPickText.textContent = `${topPick.name}를 1순위로 추천합니다. ${topPick.strengths[0]} 강점이 있고, ${budgetLabelMap[budget]}와 ${spaceLabelMap[space]} 조건을 고려했을 때 균형이 가장 좋습니다.`;
+
+      const points = [
+        `${topPick.name}는 ${topPick.strengths[1]} 장점이 있어 첫 구매 실패 확률이 낮습니다.`,
+        secondPick ? `${secondPick.name}는 대안으로 좋지만 ${secondPick.cautions}` : "대안 후보는 현재 조건에서 상대적으로 점수가 낮았습니다.",
+        `${products[0].price}부터 ${products[products.length - 1].price}까지 비교해 예산 스펙트럼을 함께 볼 수 있습니다.`
+      ];
+
+      comparisonPoints.innerHTML = points.map((item) => `<li>${item}</li>`).join("");
+      warningText.textContent = topPick.cautions;
+    }
+
+    function updatePresetState(currentQuery) {
+      presetChips.forEach((chip) => {
+        chip.classList.toggle("active", chip.dataset.query === currentQuery);
+      });
+    }
+
+    function recommendProducts() {
+      const rawQuery = queryInput.value.trim();
+      const query = normalizeText(rawQuery);
+      const budget = budgetSelect.value;
+      const space = spaceSelect.value;
+
+      const ranked = productCatalog
+        .map((product) => ({
+          ...product,
+          matchScore: scoreProduct(product, query, budget, space)
+        }))
+        .filter((product) => product.matchScore >= 36)
+        .sort((a, b) => b.matchScore - a.matchScore)
+        .slice(0, 3);
+
+      renderProducts(ranked, query, budget, space);
+      renderSummary(ranked, query, budget, space);
+      updatePresetState(rawQuery);
+      searchHint.textContent = rawQuery
+        ? `"${rawQuery}"에 맞춰 ${ranked.length}개 후보를 추렸습니다. 추천 이유와 주의점을 함께 확인해보세요.`
+        : "검색어가 비어 있어 기본 스코어가 높은 제품 위주로 추천했습니다.";
+    }
+
+    function resetFilters() {
+      queryInput.value = "자취 시작템";
+      budgetSelect.value = "any";
+      spaceSelect.value = "any";
+      recommendProducts();
+    }
+
+    presetChips.forEach((chip) => {
+      chip.addEventListener("click", () => {
+        queryInput.value = chip.dataset.query;
+        recommendProducts();
+      });
+    });
+
+    queryInput.addEventListener("keydown", (event) => {
+      if (event.key === "Enter") {
+        recommendProducts();
+      }
+    });
 
     applyTheme(getPreferredTheme());
-    drawButton.addEventListener("click", renderNumbers);
-    resetButton.addEventListener("click", resetNumbers);
+    recommendButton.addEventListener("click", recommendProducts);
+    resetButton.addEventListener("click", resetFilters);
     themeButton.addEventListener("click", toggleTheme);
+    recommendProducts();
   </script>
 </body>
 </html>
