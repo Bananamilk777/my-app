@@ -504,6 +504,72 @@
       line-height: 1.6;
     }
 
+    .video-analysis {
+      display: grid;
+      gap: 12px;
+      margin-top: 4px;
+    }
+
+    .confidence-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 11px;
+      border-radius: 999px;
+      background: var(--brand-soft);
+      color: var(--brand);
+      font-size: 0.84rem;
+      font-weight: 800;
+    }
+
+    .candidate-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .candidate-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 10px;
+      border-radius: 999px;
+      background: rgba(127, 127, 127, 0.08);
+      color: var(--muted);
+      font-size: 0.84rem;
+    }
+
+    .video-product-grid {
+      display: grid;
+      gap: 10px;
+    }
+
+    .video-product-card {
+      padding: 14px;
+      border-radius: 16px;
+      background: rgba(127, 127, 127, 0.06);
+      border: 1px solid var(--line);
+    }
+
+    .video-product-card strong {
+      display: block;
+      font-size: 0.95rem;
+    }
+
+    .video-product-card p {
+      margin: 8px 0 0;
+      color: var(--muted);
+      font-size: 0.92rem;
+      line-height: 1.55;
+    }
+
+    .video-product-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
     .meta-row,
     .badge-row,
     .tag-row {
@@ -875,12 +941,12 @@
     <section class="panel search-panel">
       <div class="section-head">
         <h2>직접 검색해보기</h2>
-        <span id="searchMetaText">원하는 키워드로 영상과 가격 흐름을 정리합니다</span>
+        <span id="searchMetaText">유튜브 영상 URL이나 검색어로 자동 추천 흐름을 만듭니다</span>
       </div>
       <div class="search-grid">
         <div class="field">
-          <label for="queryInput">무엇을 찾고 있나요?</label>
-          <input id="queryInput" type="text" value="자취 시작템" placeholder="예: 자취 시작템, 침대용 아이패드 거치대">
+          <label for="queryInput">유튜브 영상 URL 또는 검색어</label>
+          <input id="queryInput" type="text" value="자취 시작템" placeholder="예: https://www.youtube.com/watch?v=... 또는 자취 시작템">
         </div>
         <div class="field">
           <label for="videoCountSelect">영상 개수</label>
@@ -968,7 +1034,7 @@
           <div class="summary-list">
             <div class="summary-card">
               <h3>이번 탐색의 기준</h3>
-              <p id="guideSummaryText">지금은 검색 전 상태입니다. 추천 주제를 눌러보면 어떤 기준으로 영상을 고르고, 어떤 이유로 아이템을 추천하는지 바로 확인할 수 있습니다.</p>
+              <p id="guideSummaryText">지금은 검색 전 상태입니다. 영상 제목, 설명, 태그, 가능한 경우 자막까지 합쳐서 관련 상품 후보를 자동으로 추천합니다.</p>
             </div>
             <div class="summary-card">
               <h3>비교할 때 같이 보면 좋은 포인트</h3>
@@ -987,7 +1053,7 @@
             <span>알아두면 좋아요</span>
           </div>
           <p class="trust-intro" id="hintText">
-            실시간 가격 후보와 영상 정보는 참고를 돕기 위한 자료입니다. 바로 결제하도록 밀기보다, 먼저 이해하고 비교할 수 있게 구성했습니다.
+            영상 문맥상 가능성이 높은 상품을 자동으로 연결합니다. 정확한 모델명은 상세 페이지에서 한 번 더 확인하는 흐름을 기본 전제로 둡니다.
           </p>
           <details class="accordion" open>
             <summary>제휴 링크 안내</summary>
@@ -1149,35 +1215,75 @@
       bindInlineQueryButtons();
     }
 
+    function renderMatchedProductsForVideo(matches) {
+      if (!matches.length) {
+        return createEmptyState(
+          "관련 상품을 더 찾는 중입니다.",
+          "이 영상에서 뚜렷한 제품 단서를 조금 더 모으면 연결 정확도가 올라갑니다."
+        );
+      }
+
+      return `
+        <div class="video-product-grid">
+          ${matches.map((entry) => `
+            <div class="video-product-card">
+              <strong>${escapeHtml(entry.normalizedQuery)}</strong>
+              <p>${escapeHtml(entry.confidenceScore >= 0.72 ? "영상 문맥상 가능성이 높은 후보입니다." : "관련 가능성이 있어 함께 보는 상품입니다.")}</p>
+              <div class="candidate-list">
+                ${entry.matchedProducts.map((product) => `<span class="candidate-chip">${escapeHtml(product.bucketLabel)} · ${escapeHtml(product.priceText)}</span>`).join("")}
+              </div>
+              <div class="video-product-actions">
+                ${entry.matchedProducts.map((product) => `
+                  <a class="action-link" href="${escapeHtml(product.affiliateUrl || product.link)}" target="_blank" rel="noreferrer">
+                    ${escapeHtml(product.isLowConfidence ? "관련 상품 보기" : "쿠팡에서 보기")}
+                  </a>
+                `).join("")}
+              </div>
+            </div>
+          `).join("")}
+        </div>
+      `;
+    }
+
     function renderVideos(videos) {
       if (!videos.length) {
         videoList.innerHTML = createEmptyState(
-          "지금 보여드릴 영상이 없어요.",
-          "API 연결 상태를 확인하거나 다른 키워드로 다시 탐색해보세요."
+          "추천 가능한 영상을 찾는 중입니다.",
+          "다른 키워드를 입력하거나 영상 URL을 붙여 넣으면 관련 상품 연결을 이어서 준비합니다."
         );
         return;
       }
 
-      videoList.innerHTML = videos.map((video) => `
+      videoList.innerHTML = videos.map((entry) => `
         <article class="video-card">
           <iframe
             class="video-frame"
-            src="${escapeHtml(video.embedUrl)}"
-            title="${escapeHtml(video.title)}"
+            src="${escapeHtml(entry.video.embedUrl)}"
+            title="${escapeHtml(entry.video.title)}"
             loading="lazy"
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
             allowfullscreen
             referrerpolicy="strict-origin-when-cross-origin"
           ></iframe>
-          <div>
-            <h3>${escapeHtml(video.title)}</h3>
-            <p>${escapeHtml(video.description || "영상 설명이 없습니다.")}</p>
-            <div class="meta-row">
-              <span>${escapeHtml(video.channelTitle)}</span>
-              <span>${escapeHtml(video.publishedAtLabel)}</span>
+          <div class="video-analysis">
+            <div>
+              <h3>${escapeHtml(entry.video.title)}</h3>
+              <p>${escapeHtml(entry.video.description || "영상 설명이 없습니다.")}</p>
             </div>
+            <div class="meta-row">
+              <span>${escapeHtml(entry.video.channelTitle)}</span>
+              <span>${escapeHtml(entry.video.publishedAtLabel)}</span>
+              <span class="confidence-pill">${escapeHtml(entry.surfaceLabel)} · 신뢰도 ${Math.round((entry.confidenceScore || 0) * 100)}%</span>
+            </div>
+            <p>${escapeHtml(entry.summary)}</p>
+            <div class="candidate-list">
+              ${(entry.extractedCandidates || []).slice(0, 4).map((candidate) => `
+                <span class="candidate-chip">${escapeHtml(candidate.normalizedQuery)} · ${Math.round(candidate.confidenceScore * 100)}%</span>
+              `).join("")}
+            </div>
+            ${renderMatchedProductsForVideo(entry.matchedProducts || [])}
             <div class="video-actions">
-              <a class="action-link" href="${escapeHtml(video.url)}" target="_blank" rel="noreferrer">유튜브에서 보기</a>
+              <a class="action-link" href="${escapeHtml(entry.video.url)}" target="_blank" rel="noreferrer">유튜브에서 보기</a>
             </div>
           </div>
         </article>
@@ -1187,8 +1293,8 @@
     function renderOffers(offers) {
       if (!offers.length) {
         return createEmptyState(
-          "실시간 가격 후보를 아직 불러오지 못했습니다.",
-          "쇼핑 API 연결 상태를 확인하거나 검색 결과 페이지에서 한 번 더 비교해보세요."
+          "관련 상품을 준비 중입니다.",
+          "현재 찾은 단서를 바탕으로 연결 가능한 후보를 계속 정리하고 있습니다."
         );
       }
 
@@ -1259,18 +1365,21 @@
     }
 
     function renderSummary(payload) {
-      const fallback = TOPIC_COPY[payload.query] || {
-        guide: "검색어에 맞는 영상과 대표 아이템을 함께 비교해보세요.",
+      const topicKey = payload.inputType === "video_url" ? "video_url" : payload.query;
+      const fallback = TOPIC_COPY[topicKey] || {
+        guide: "영상 문맥과 상품명을 함께 비교해보세요.",
         compare: [
           "영상에서 실제 사용 장면을 먼저 확인해보세요.",
-          "가격 후보는 낮은 순서대로 비교하는 편이 이해하기 쉽습니다.",
-          "최종 구매 전 옵션과 모델명을 다시 확인하세요."
+          "정확한 모델은 상세 페이지에서 한 번 더 확인하는 편이 안전합니다.",
+          "신뢰도가 낮은 경우에는 관련 상품 추천으로 받아들이는 편이 좋습니다."
         ]
       };
 
-      summaryLabel.textContent = `"${payload.query}" 결과`;
-      summaryText.textContent = `"${payload.query}"에 대해 최신 영상 ${payload.videos.length}개를 먼저 보고, 대표 아이템 ${payload.products.length}개를 이유와 함께 비교할 수 있게 정리했습니다.`;
-      guideTitle.textContent = payload.query;
+      summaryLabel.textContent = payload.inputType === "video_url" ? "입력한 영상 기준 결과" : `"${payload.query}" 결과`;
+      summaryText.textContent = payload.inputType === "video_url"
+        ? `입력한 영상 ${payload.videos.length}개를 기준으로 제목, 설명, 태그, 가능한 경우 자막 단서를 합쳐 상품 후보를 자동 추출했습니다.`
+        : `"${payload.query}"에 대해 최신 영상 ${payload.videos.length}개를 먼저 보고, 영상별 상품 후보와 연결 가능한 구매 경로를 정리했습니다.`;
+      guideTitle.textContent = payload.inputType === "video_url" ? "자동 추출 결과" : payload.query;
       guideSummaryText.textContent = payload.guideSummary || fallback.guide;
       checkList.innerHTML = fallback.compare.map((item) => `<li>${escapeHtml(item)}</li>`).join("");
     }
@@ -1288,8 +1397,8 @@
       errorText.textContent = "";
       searchButton.disabled = true;
       searchButton.textContent = "정리하는 중...";
-      heroStatus.textContent = `"${query}"에 맞는 영상과 가격 흐름을 정리하고 있습니다.`;
-      searchMetaText.textContent = "영상, 추천 이유, 가격 후보를 순서대로 불러옵니다";
+      heroStatus.textContent = `"${query}"에서 제품 단서를 찾고 관련 상품을 연결하고 있습니다.`;
+      searchMetaText.textContent = "영상 메타데이터에서 후보를 추출하고 상품 연결을 시도합니다";
 
       try {
         const response = await fetch(`/api/discovery?q=${encodeURIComponent(query)}&maxVideos=${encodeURIComponent(maxVideos)}&sort=${encodeURIComponent(sort)}`);
@@ -1302,23 +1411,25 @@
         renderProducts(payload.products);
         renderSummary(payload);
         videoCountText.textContent = payload.videos.length
-          ? `${payload.videos.length}개 영상 정리됨`
-          : "영상 결과가 없어요";
+          ? `${payload.videos.length}개 영상에서 후보 추출 중`
+          : "영상 후보를 준비 중입니다";
         productCountText.textContent = payload.products.length
-          ? `${payload.products.length}개 아이템 비교 중`
-          : "아이템 비교 결과가 없어요";
+          ? `${payload.products.length}개 연결 상품 정리됨`
+          : "관련 상품을 준비 중입니다";
         youtubeStatus.textContent = payload.youtubeNote;
         priceStatus.textContent = payload.shoppingNote;
         hintText.textContent = payload.note;
-        heroStatus.textContent = `"${payload.query}"에 대해 먼저 볼 영상과 비교할 아이템을 정리했습니다.`;
+        heroStatus.textContent = payload.inputType === "video_url"
+          ? "입력한 영상에서 가능성이 높은 상품 후보를 연결했습니다."
+          : `"${payload.query}" 관련 영상에서 자동 추출한 상품 후보를 연결했습니다.`;
         updateQuerySelection(query);
       } catch (error) {
         renderInitialState();
-        summaryLabel.textContent = "불러오지 못했어요";
-        summaryText.textContent = "검색 결과를 가져오는 과정에서 문제가 생겼습니다. 잠시 후 다시 시도해주세요.";
-        guideTitle.textContent = "재시도 필요";
-        guideSummaryText.textContent = "API 연결 상태나 키 설정을 확인한 뒤 다시 시도하면 됩니다.";
-        errorText.textContent = `오류: ${error.message}`;
+        summaryLabel.textContent = "잠시 준비가 지연되고 있어요";
+        summaryText.textContent = "추천 가능한 영상과 상품 연결을 다시 준비하고 있습니다. 잠시 후 다시 시도해주세요.";
+        guideTitle.textContent = "다시 시도해보기";
+        guideSummaryText.textContent = "입력한 영상 URL이나 검색어를 기준으로 자동 추천 흐름을 다시 정리할 수 있습니다.";
+        errorText.textContent = "연결이 잠시 지연되고 있습니다.";
       } finally {
         searchButton.disabled = false;
         searchButton.textContent = "먼저 비교해보기";
@@ -1332,21 +1443,21 @@
       updateQuerySelection("자취 시작템");
       renderInitialState();
       summaryLabel.textContent = "아직 탐색을 시작하지 않았어요";
-      summaryText.textContent = "추천 주제를 누르거나 검색어를 입력하면, 영상부터 아이템과 가격 비교까지 한 번에 정리해드립니다.";
+      summaryText.textContent = "추천 주제를 누르거나 유튜브 영상 URL을 붙여 넣으면, 영상 문맥상 가능성이 높은 상품을 자동으로 연결해드립니다.";
       guideTitle.textContent = "비교 전";
-      guideSummaryText.textContent = "지금은 검색 전 상태입니다. 추천 주제를 눌러보면 어떤 기준으로 영상을 고르고, 어떤 이유로 아이템을 추천하는지 바로 확인할 수 있습니다.";
+      guideSummaryText.textContent = "지금은 검색 전 상태입니다. 영상 제목, 설명, 태그, 가능한 경우 자막까지 합쳐서 관련 상품 후보를 자동으로 추천합니다.";
       checkList.innerHTML = [
-        "영상에서 제품이 어떻게 쓰이는지 먼저 보면 실패 확률이 줄어듭니다.",
-        "가격만 보지 말고 입문자 적합도와 설치 난이도도 함께 비교해보세요.",
+        "설명란 링크나 모델명이 직접 보이면 더 정확하게 연결됩니다.",
+        "신뢰도가 낮은 경우에는 정확한 모델보다 관련 상품 추천으로 이해하는 편이 좋습니다.",
         "최종 구매 전에는 상품 상세페이지에서 모델명과 옵션을 다시 확인하세요."
       ].map((item) => `<li>${escapeHtml(item)}</li>`).join("");
       videoCountText.textContent = "추천 주제를 눌러 시작해보세요";
-      productCountText.textContent = "아직 비교 전입니다";
-      heroStatus.textContent = "추천 주제를 누르거나 검색어를 직접 입력해 비교를 시작해보세요.";
-      youtubeStatus.textContent = "외부 재생이 가능한 유튜브 영상만 골라서 보여줍니다.";
-      priceStatus.textContent = "실시간 가격 후보를 낮은 순서대로 정리해 차이를 보기 쉽게 제공합니다.";
-      searchMetaText.textContent = "원하는 키워드로 영상과 가격 흐름을 정리합니다";
-      hintText.textContent = "실시간 가격 후보와 영상 정보는 참고를 돕기 위한 자료입니다. 바로 결제하도록 밀기보다, 먼저 이해하고 비교할 수 있게 구성했습니다.";
+      productCountText.textContent = "관련 상품 연결을 준비 중입니다";
+      heroStatus.textContent = "추천 주제를 누르거나 유튜브 영상 URL을 넣어 자동 추출을 시작해보세요.";
+      youtubeStatus.textContent = "제목, 설명, 태그를 우선 수집하고 가능하면 자막 단서까지 반영합니다.";
+      priceStatus.textContent = "쿠팡 연결을 우선 시도하고, 낮은 신뢰도는 관련 상품 추천으로 완곡하게 표시합니다.";
+      searchMetaText.textContent = "유튜브 영상 URL이나 검색어로 자동 추천 흐름을 만듭니다";
+      hintText.textContent = "영상 문맥상 가능성이 높은 상품을 자동으로 연결합니다. 정확한 모델명은 상세 페이지에서 한 번 더 확인하는 흐름을 기본 전제로 둡니다.";
       errorText.textContent = "";
     }
 

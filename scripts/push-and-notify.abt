@@ -1,0 +1,10 @@
+@echo off
+cd /d C:\dev\my-app
+
+git push
+if errorlevel 1 (
+  echo my-app git push 실패
+  exit /b 1
+)
+
+node C:\dev\shared\scripts\notify-telegram.js "my-app git push 완료"
